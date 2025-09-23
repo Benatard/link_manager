@@ -21,6 +21,7 @@ const DEFAULT_CATEGORIES = [
   "Actualités",
   "Développement",
   "Design",
+  "Autre",
 ]
 
 export default function LinkManager() {
@@ -482,7 +483,7 @@ export default function LinkManager() {
                     {link.description && <p className="text-sm text-gray-600 mb-2">{link.description}</p>}
                     <p className="text-sm text-gray-500 break-all">{link.url}</p>
                   </div>
-                  <button onClick={() => deleteLink(link.id)} className="text-red-500 hover:text-red-700 p-1">
+                  {/* <button onClick={() => deleteLink(link.id)} className="text-red-500 hover:text-red-700 p-1">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
@@ -491,7 +492,7 @@ export default function LinkManager() {
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
-                  </button>
+                  </button> */}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">{link.category}</span>
