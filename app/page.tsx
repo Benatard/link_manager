@@ -1,0 +1,551 @@
+"use client"
+
+import { useState, useEffect } from "react"
+
+interface Link {
+  id: string
+  title: string
+  url: string
+  category: string
+  image?: string
+  description?: string
+  createdAt: string
+}
+
+const DEFAULT_CATEGORIES = [
+  "Réseaux Sociaux",
+  "Outils de Travail",
+  "Divertissement",
+  "Éducation",
+  "Shopping",
+  "Actualités",
+  "Développement",
+  "Design",
+]
+
+export default function LinkManager() {
+  const [links, setLinks] = useState<Link[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [newLink, setNewLink] = useState({
+    title: "",
+    url: "",
+    category: "",
+    image: "",
+    description: "",
+  })
+
+  useEffect(() => {
+    fetchLinks()
+  }, [])
+
+  const fetchLinks = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/links")
+      if (response.ok) {
+        const data = await response.json()
+        setLinks(data)
+      } else {
+        console.error("Erreur lors du chargement des liens")
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des liens:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const addLink = async () => {
+    if (newLink.title && newLink.url && newLink.category) {
+      try {
+        setIsSubmitting(true)
+        const linkData = {
+          title: newLink.title,
+          url: newLink.url.startsWith("http") ? newLink.url : `https://${newLink.url}`,
+          category: newLink.category,
+          image: newLink.image || null,
+          description: newLink.description || null,
+        }
+
+        const response = await fetch("/api/links", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(linkData),
+        })
+
+        if (response.ok) {
+          const newLinkData = await response.json()
+          setLinks([newLinkData, ...links])
+          setNewLink({ title: "", url: "", category: "", image: "", description: "" })
+          setIsModalOpen(false)
+        } else {
+          console.error("Erreur lors de l'ajout du lien")
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'ajout du lien:", error)
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+  }
+
+  const deleteLink = async (id: string) => {
+    try {
+      const response = await fetch(`/api/links/${id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setLinks(links.filter((link) => link.id !== id))
+      } else {
+        console.error("Erreur lors de la suppression du lien")
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression du lien:", error)
+    }
+  }
+
+  const filteredLinks = links.filter((link) => {
+    const matchesSearch =
+      link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.url.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "all" || link.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const categories = [...new Set(links.map((link) => link.category))]
+  const linksByCategory = categories.reduce(
+    (acc, category) => {
+      acc[category] = links.filter((link) => link.category === category)
+      return acc
+    },
+    {} as Record<string, Link[]>,
+  )
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de vos liens...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-600 rounded-lg">
+                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">LinkManager</h1>
+                <p className="text-sm text-gray-600">Organisez vos liens par catégorie</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Ajouter un lien
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Ajouter un nouveau lien</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">Ajoutez un lien à votre collection organisée par catégories.</p>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Titre
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  placeholder="Nom de la plateforme"
+                  value={newLink.title}
+                  onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
+                  URL
+                </label>
+                <input
+                  id="url"
+                  type="text"
+                  placeholder="https://example.com"
+                  value={newLink.url}
+                  onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                  Catégorie
+                </label>
+                <select
+                  id="category"
+                  value={newLink.category}
+                  onChange={(e) => setNewLink({ ...newLink, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="">Choisir une catégorie</option>
+                  {DEFAULT_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                  Image <span className="text-gray-400 text-xs">(optionnel)</span>
+                </label>
+                <input
+                  id="image"
+                  type="text"
+                  placeholder="URL de l'image ou favicon"
+                  value={newLink.image}
+                  onChange={(e) => setNewLink({ ...newLink, image: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-gray-400 text-xs">(optionnel)</span>
+                </label>
+                <textarea
+                  id="description"
+                  placeholder="Courte description de la plateforme"
+                  value={newLink.description}
+                  onChange={(e) => setNewLink({ ...newLink, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                />
+              </div>
+
+              <button
+                onClick={addLink}
+                disabled={isSubmitting}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Ajout en cours...
+                  </>
+                ) : (
+                  "Ajouter le lien"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search and Filter */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Rechercher dans vos liens..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          >
+            <option value="all">Toutes les catégories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{links.length}</p>
+                <p className="text-sm text-gray-600">Total des liens</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
+                <p className="text-sm text-gray-600">Catégories</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{filteredLinks.length}</p>
+                <p className="text-sm text-gray-600">Résultats</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Links Display */}
+        {selectedCategory === "all" ? (
+          <div className="space-y-8">
+            {Object.entries(linksByCategory).map(([category, categoryLinks]) => (
+              <div key={category}>
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">{category}</h2>
+                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-sm">
+                    {categoryLinks.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categoryLinks
+                    .filter(
+                      (link) =>
+                        link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        link.url.toLowerCase().includes(searchTerm.toLowerCase()),
+                    )
+                    .map((link) => (
+                      <div
+                        key={link.id}
+                        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        {link.image && (
+                          <div className="mb-3">
+                            <img
+                              src={link.image || "/placeholder.svg"}
+                              alt={link.title}
+                              className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none"
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">{link.title}</h3>
+                            {link.description && <p className="text-sm text-gray-600 mb-2">{link.description}</p>}
+                            <p className="text-sm text-gray-500 break-all">{link.url}</p>
+                          </div>
+                          {/* <button onClick={() => deleteLink(link.id)} className="text-red-500 hover:text-red-700 p-1">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button> */}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+                            {link.category}
+                          </span>
+                          <button
+                            onClick={() => window.open(link.url, "_blank")}
+                            className="text-emerald-600 hover:text-emerald-700 p-1"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredLinks.map((link) => (
+              <div
+                key={link.id}
+                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                {link.image && (
+                  <div className="mb-3">
+                    <img
+                      src={link.image || "/placeholder.svg"}
+                      alt={link.title}
+                      className="w-12 h-12 rounded-lg object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none"
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{link.title}</h3>
+                    {link.description && <p className="text-sm text-gray-600 mb-2">{link.description}</p>}
+                    <p className="text-sm text-gray-500 break-all">{link.url}</p>
+                  </div>
+                  <button onClick={() => deleteLink(link.id)} className="text-red-500 hover:text-red-700 p-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">{link.category}</span>
+                  <button
+                    onClick={() => window.open(link.url, "_blank")}
+                    className="text-emerald-600 hover:text-emerald-700 p-1"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {filteredLinks.length === 0 && (
+          <div className="text-center py-12">
+            <div className="p-4 bg-gray-100 rounded-lg inline-block mb-4">
+              <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun lien trouvé</h3>
+            <p className="text-gray-600 mb-4">
+              {searchTerm || selectedCategory !== "all"
+                ? "Essayez de modifier vos critères de recherche."
+                : "Commencez par ajouter votre premier lien !"}
+            </p>
+            {!searchTerm && selectedCategory === "all" && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 mx-auto transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter votre premier lien
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
