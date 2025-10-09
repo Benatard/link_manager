@@ -6,7 +6,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'LM',
-  description: 'Created with v0',
+  description: 'Created with sabeer',
   generator: 'v0.app',
 }
 
