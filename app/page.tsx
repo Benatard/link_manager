@@ -476,7 +476,7 @@ export default function LinkManager() {
             {filteredLinks.map((link) => (
               <div
                 key={link.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
               >
                 {link.image && (
                   <div className="mb-3">
@@ -492,9 +492,9 @@ export default function LinkManager() {
                 )}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{link.title}</h3>
-                    {link.description && <p className="text-sm text-gray-600 mb-2">{link.description}</p>}
-                    <p className="text-sm text-gray-500 break-all">{link.url}</p>
+                    <h3 className="text-lg font-semibold text-green-400 mb-1">{link.title}</h3>
+                    {link.description && <p className="text-sm text-gray-200 mb-2">{link.description}</p>}
+                    <p className="text-sm text-gray-300 break-all">{link.url}</p>
                   </div>
                   {/* <button onClick={() => deleteLink(link.id)} className="text-red-500 hover:text-red-700 p-1">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,7 +508,7 @@ export default function LinkManager() {
                   </button> */}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">{link.category}</span>
+                  <span className="bg-gray-700 text-gray-200 border-gray-600 border px-2 py-1 rounded text-xs">{link.category}</span>
                   <button
                     onClick={() => window.open(link.url, "_blank")}
                     className="text-emerald-600 hover:text-emerald-700 p-1"
