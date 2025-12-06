@@ -133,19 +133,20 @@ export default function LinkManager() {
   if (isLoading) {
   return ( <>
   <div className="min-h-screen bg-gray-900">
-       <header className=" border-gray-200 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-2xl text-green-700 border mb-1 border-green-700 p-1 rounded-lg font-bold text-gray-200">LinkManager</h1>
-              </div>
-            </div>
-
-            
-          </div>
-        </div>
-      </header>
+        <header className="border-gray-200 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+         <div className="container mx-auto px-4 py-4">
+           <div className="flex flex-col items-center justify-center text-center">
+             <img
+               className="w-15 rounded-lg h-15"
+               src="/icon.png"
+               alt="Logo"
+             />
+             <h1 className=" text-gray-400 px-3 py-1 font-bold">
+               LinkManager
+             </h1>
+           </div>
+         </div>
+       </header>
   <LinkCardSkeleton />
 
   
@@ -156,24 +157,27 @@ export default function LinkManager() {
   )
 }
 
+const isGrantid = true ;
 
-
-  return (
+if(isGrantid){
+   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <header className=" border-gray-200 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-2xl text-green-700 border mb-1 border-green-700 p-1 rounded-lg font-bold text-gray-200">LinkManager</h1>
-              </div>
-            </div>
 
-            
-          </div>
-        </div>
-      </header>
+      {/* Header */}
+       <header className="border-gray-200 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+         <div className="container mx-auto px-4 py-4">
+           <div className="flex flex-col items-center justify-center text-center">
+             <img
+               className="w-15 rounded-lg h-15"
+               src="/icon.png"
+               alt="Logo"
+             />
+             <h1 className=" text-gray-400 px-3 py-1 font-bold">
+               LinkManager
+             </h1>
+           </div>
+         </div>
+       </header>
 
       {/* Modal */}
       {isModalOpen && (
@@ -562,4 +566,6 @@ export default function LinkManager() {
       </div>
     </div>
   )
+} return(<></>)
+
 }
